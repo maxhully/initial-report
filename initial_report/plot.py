@@ -33,6 +33,8 @@ def combined_plot(geometries, overlay, cmap=WARNING_COLOR, **kwargs):
 
 
 def overlap_plot(geometries, overlaps, **kwargs):
+    if len(overlaps) == 0:
+        return ""
     fig = Figure()
     FigureCanvasAgg(fig)
     ax = fig.subplots()

@@ -7,10 +7,21 @@ import pandas
 import maup
 from maup.repair import holes_of_union
 
-from .plot import choropleth, combined_plot, graph_plot, histogram, overlap_plot
+from .plot import choropleth, graph_plot, histogram, overlap_plot
 
-ReportItem = namedtuple("ReportItem", "name number image")
 Report = namedtuple("Report", "title items")
+
+
+class ReportItem:
+    def __init__(self, name, number, image="", success=None):
+        if not isinstance(number, str):
+            number = "{:,}".format(number)
+        if success is not None:
+            symbol = {True: "✅", False: "❌"}
+            number += " " + symbol[success]
+        self.name = name
+        self.number = number
+        self.image = image
 
 
 def get_degrees(adj, index):
@@ -33,8 +44,8 @@ def graph_report(geometries, adj):
         "Graph",
         [
             ReportItem("Plot", "", choropleth(geometries, linewidth=0.5)),
-            ReportItem("Nodes", "{:,}".format(len(geometries)), ""),
-            ReportItem("Edges", "{:,}".format(len(adj)), ""),
+            ReportItem("Nodes", len(geometries), ""),
+            ReportItem("Edges", len(adj), ""),
             ReportItem("Graph", "", graph_plot(geometries, adj)),
             ReportItem("Degrees", "", histogram(degrees, bins=range(0, degrees.max()))),
             ReportItem(
@@ -64,11 +75,29 @@ def topology_report(geometries, adj):
         "Topology",
         [
             ReportItem(
-                "Invalid Geometries", len(invalid), combined_plot(geometries, invalid)
+                "Invalid Geometries",
+                len(invalid),
+                overlap_plot(geometries, invalid),
+                success=len(invalid) == 0,
             ),
-            ReportItem("Islands", len(islands), combined_plot(geometries, islands)),
-            ReportItem("Overlaps", len(overlaps), overlap_plot(geometries, overlaps)),
-            ReportItem("Gaps", len(gaps), combined_plot(geometries, gaps)),
+            ReportItem(
+                "Islands",
+                len(islands),
+                overlap_plot(geometries, islands),
+                success=len(islands) == 0,
+            ),
+            ReportItem(
+                "Overlaps",
+                len(overlaps),
+                overlap_plot(geometries, overlaps),
+                success=len(overlaps) == 0,
+            ),
+            ReportItem(
+                "Gaps",
+                len(gaps),
+                overlap_plot(geometries, gaps),
+                success=len(gaps) == 0,
+            ),
             ReportItem("Areas", "", histogram(geometries.area, bins=40)),
         ],
     )

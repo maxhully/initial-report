@@ -19,8 +19,8 @@ def main(filename, output_file):
 
     reports = generate_reports(df)
 
-    with open(output_file, "w") as f:
-        f.write(template.render(title=title, reports=reports))
+    with open(output_file, "wb") as f:
+        f.write(template.render(title=title, reports=reports).encode("utf-8"))
 
 
 if __name__ == "__main__":

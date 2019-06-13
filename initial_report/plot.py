@@ -4,6 +4,7 @@ from io import BytesIO
 import geopandas
 import pandas
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.cm import get_cmap
 from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 from shapely.geometry import LineString
@@ -35,9 +36,7 @@ def combined_plot(geometries, overlay, cmap=WARNING_COLOR, **kwargs):
 def overlap_plot(geometries, overlaps, **kwargs):
     if len(overlaps) == 0:
         return ""
-    fig = Figure()
-    FigureCanvasAgg(fig)
-    ax = fig.subplots()
+    fig, ax = subplots()
     kwargs = {
         **dict(
             color="#eeeeee", figsize=(12, 12), edgecolor=(1, 1, 1), linewidth=1, alpha=1
@@ -48,10 +47,7 @@ def overlap_plot(geometries, overlaps, **kwargs):
     overlaps_kwargs = {**kwargs, **dict(edgecolor="#e31a1c", color="#e31a1c")}
     ax = overlaps.buffer(0).plot(ax=ax, **overlaps_kwargs)
     ax.set_axis_off()
-    buf = BytesIO()
-    fig.savefig(buf, format="png", dpi=150)
-    data = base64.b64encode(buf.getbuffer()).decode("ascii")
-    return f'<img src="data:image/png;base64,{data}"/>'
+    return html_image(fig)
 
 
 def graph_plot(geometries, adj):
@@ -69,26 +65,44 @@ def graph_plot(geometries, adj):
 
 
 def histogram(series, **kwargs):
-    fig = Figure()
-    FigureCanvasAgg(fig)
-    ax = fig.subplots()
+    fig, ax = subplots()
     ax.hist(series, color="#0099cd", **kwargs)
-    buf = BytesIO()
-    fig.savefig(buf, format="png")
-    data = base64.b64encode(buf.getbuffer()).decode("ascii")
-    return f'<img src="data:image/png;base64,{data}"/>'
+    return html_image(fig)
+
+
+def bar_chart(data, **kwargs):
+    fig, ax = subplots()
+    indices = list(range(len(data)))
+    if "cmap" in kwargs:
+        cmap = get_cmap(kwargs["cmap"])
+        colors = cmap(indices)
+        kwargs["color"] = colors
+        del kwargs["cmap"]
+    elif "color" not in kwargs:
+        kwargs["color"] = "#0099cd"
+    ax.bar(indices, data, **kwargs)
+    return html_image(fig)
 
 
 def choropleth(geometries, cmap=DEFAULT_COLOR, **kwargs):
-    fig = Figure()
-    FigureCanvasAgg(fig)
-    ax = fig.subplots()
+    fig, ax = subplots()
     kwargs = {
         **dict(cmap=cmap, figsize=(12, 12), edgecolor=(1, 1, 1), linewidth=1, alpha=1),
         **kwargs,
     }
     ax = geometries.plot(ax=ax, **kwargs)
     ax.set_axis_off()
+    return html_image(fig)
+
+
+def subplots():
+    fig = Figure()
+    FigureCanvasAgg(fig)
+    ax = fig.subplots()
+    return fig, ax
+
+
+def html_image(fig):
     buf = BytesIO()
     fig.savefig(buf, format="png", dpi=150)
     data = base64.b64encode(buf.getbuffer()).decode("ascii")

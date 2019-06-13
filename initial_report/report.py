@@ -96,7 +96,7 @@ def graph_report(geometries, adj):
     return Report(
         "Graph",
         [
-            ReportItem("Plot", "", choropleth(geometries, linewidth=0.5)),
+            ReportItem("Plot", image=choropleth(geometries, linewidth=0.5)),
             ReportItem("Graph Plot", image=graph_plot(geometries, adj)),
             ReportItem("Nodes", len(geometries)),
             ReportItem("Edges", len(adj)),
@@ -117,10 +117,10 @@ def degree_report(geometries, adj):
                 number="{:,} ({:,.2f}%)".format(
                     degree_outliers, 100 * degree_outliers / len(geometries)
                 ),
-                warning=degree_outliers > (len(geometries) * 0.01),
+                # warning=degree_outliers > (len(geometries) * 0.01),
                 description=(
-                    "Nodes with degree more than 3 standard deviations above the mean degree. "
-                    "A warning appears if more than 1% of nodes are outliers."
+                    "Nodes with degree more than 3 standard deviations above the mean degree."
+                    # " A warning appears if more than 1% of nodes are outliers."
                 ),
             ),
             ReportItem(

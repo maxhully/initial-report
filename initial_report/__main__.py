@@ -17,11 +17,15 @@ def write_output(title, reports, output_file):
 
 @click.command()
 @click.argument("filename")
+@click.option("--reproject/--no-reproject", default=True)
 @click.option("--pop-column", default="TOTPOP")
 @click.option("--output-file", default="output.html")
-def main(filename, output_file, pop_column):
+def main(filename, output_file, pop_column, reproject):
     title = filename.split("/")[-1]
-    df = reprojected(geopandas.read_file(filename))
+
+    df = geopandas.read_file(filename)
+    if reproject:
+        df = reprojected(df)
 
     if pop_column in df.columns:
         population = df[pop_column]

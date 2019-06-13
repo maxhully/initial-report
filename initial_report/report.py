@@ -97,7 +97,7 @@ def graph_report(geometries, adj):
                     geometries,
                     cmap="inferno",
                     column="degree",
-                    linewidth=0.25,
+                    linewidth=0,
                     legend=True,
                 ),
             ),

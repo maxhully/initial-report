@@ -140,7 +140,7 @@ def topology_report(geometries, adj):
                 overlap_plot(geometries, gaps),
                 success=len(gaps) == 0,
             ),
-            ReportItem("Areas", image=histogram(geometries.area, bins=40)),
+            ReportItem("Area Histogram", image=histogram(geometries.area, bins=40)),
         ],
     )
 

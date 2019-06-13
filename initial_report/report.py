@@ -1,4 +1,5 @@
 import itertools
+import math
 from collections import namedtuple
 
 import geopandas
@@ -11,19 +12,32 @@ from maup.repair import holes_of_union
 
 from .plot import bar_chart, choropleth, graph_plot, histogram, overlap_plot
 
-Report = namedtuple("Report", "title items")
+
+class Report:
+    def __init__(self, title, items):
+        self.title = title
+        self.items = items
+
+    @property
+    def slug(self):
+        return "-".join(s.lower() for s in self.title.split())
 
 
 class ReportItem:
-    def __init__(self, name, number="", image="", success=None):
+    def __init__(
+        self, name, number="", image="", *, success=None, warning=None, description=None
+    ):
         if not isinstance(number, str):
             number = "{:,}".format(number)
-        if success is not None:
-            symbol = {True: "✅", False: "❌"}
-            number += " " + symbol[success]
         self.name = name
         self.number = number
         self.image = image
+        self.indicator = ""
+        if success is not None:
+            self.indicator += {True: "✅", False: "❌"}.get(success, "")
+        if warning:
+            self.indicator += "⚠️"
+        self.description = description
 
 
 def get_degrees(adj, index):
@@ -69,27 +83,49 @@ def connectivity_report(graph, geometries):
                 image=components_plot,
             )
         )
-        components_hist = bar_chart(
-            [len(component) for component in components], cmap="tab20"
-        )
-        items.append(ReportItem("Sizes of Connected Components", image=components_hist))
+        # These colors aren't matching up as intended yet:
+        # components_hist = bar_chart(
+        #     [len(component) for component in components], cmap="tab20"
+        # )
+        # items.append(ReportItem("Sizes of Connected Components", image=components_hist))
 
     return Report("Connectivity", items)
 
 
 def graph_report(geometries, adj):
-    degrees = get_degrees(adj, geometries.index)
-    geometries["degree"] = degrees
     return Report(
         "Graph",
         [
             ReportItem("Plot", "", choropleth(geometries, linewidth=0.5)),
+            ReportItem("Graph Plot", image=graph_plot(geometries, adj)),
             ReportItem("Nodes", len(geometries)),
             ReportItem("Edges", len(adj)),
-            ReportItem("Graph", image=graph_plot(geometries, adj)),
+        ],
+    )
+
+
+def degree_report(geometries, adj):
+    degrees = get_degrees(adj, geometries.index)
+    geometries["degree"] = degrees
+    degree_outliers = (degrees > degrees.mean() + 3 * degrees.std()).sum()
+    return Report(
+        "Node Degrees",
+        [
+            ReportItem("Mean Degree", "{:,.4f}".format(degrees.mean())),
+            ReportItem(
+                "Degree Outliers",
+                number="{:,} ({:,.2f}%)".format(
+                    degree_outliers, 100 * degree_outliers / len(geometries)
+                ),
+                warning=degree_outliers > (len(geometries) * 0.01),
+                description=(
+                    "Nodes with degree more than 3 standard deviations above the mean degree. "
+                    "A warning appears if more than 1% of nodes are outliers."
+                ),
+            ),
             ReportItem(
                 "Degree Histogram",
-                image=histogram(degrees, bins=range(0, int(degrees.max()))),
+                image=histogram(degrees, bins=range(0, math.ceil(degrees.max()))),
             ),
             ReportItem(
                 "Degree Choropleth",
@@ -140,17 +176,30 @@ def topology_report(geometries, adj):
                 overlap_plot(geometries, gaps),
                 success=len(gaps) == 0,
             ),
-            ReportItem("Area Histogram", image=histogram(geometries.area, bins=40)),
+            # ReportItem("Area Histogram", image=histogram(geometries.area, bins=40)),
         ],
     )
 
 
 def population_report(geometries, population):
     geometries["population"] = population
+    num_zero_pop = (population < 1).sum()
+    zero_pop = ReportItem(
+        "Zero-Population Nodes",
+        number="{:,} ({:,.2f}%)".format(
+            num_zero_pop, 100 * num_zero_pop / len(geometries)
+        ),
+        warning=num_zero_pop > (len(geometries) * 0.1),
+        description=(
+            "Nodes with zero total population. "
+            "A warning appears if more than 10% of nodes have zero population."
+        ),
+    )
+
     return Report(
         "Population",
         [
-            ReportItem("Zero-Population Nodes", (population < 1).sum()),
+            zero_pop,
             ReportItem("Population Histogram", image=histogram(population, bins=40)),
             ReportItem(
                 "Population Choropleth",
@@ -172,8 +221,9 @@ def generate_reports(geometries, population=None):
     graph = Graph(list(adj.index))
     reports = [
         graph_report(geometries, adj),
-        topology_report(geometries, adj),
+        degree_report(geometries, adj),
         connectivity_report(graph, geometries),
+        topology_report(geometries, adj),
     ]
     if population is not None:
         reports.append(population_report(geometries, population))

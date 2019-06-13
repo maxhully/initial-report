@@ -52,15 +52,108 @@
       h3 {
         font-size: 1.25rem;
       }
+      /* table */
+
+      table {
+        border-spacing: 0;
+        border-collapse: collapse;
+        margin: 1rem auto;
+      }
+
+      th,
+      td {
+        padding: 0.4rem 0.8rem;
+      }
+
+      thead {
+        border-bottom: 1px solid #111;
+      }
+
+      thead tr:last-child th {
+        text-align: right;
+      }
+
+      tbody {
+        border-bottom: 1px solid #111;
+      }
+
+      td {
+        text-align: right;
+      }
+
+      tbody th {
+        min-width: 120px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        margin: 0 auto;
+      }
+
+      td a {
+        font-weight: bold;
+      }
+
+      .toc {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .toc__item {
+        transition: all 100ms ease;
+        padding: 0.5rem;
+        margin: 0 -0.5rem;
+        border-radius: 0.25rem;
+      }
+
+      .toc__item:hover {
+        background: #f9f9f9;
+      }
+
+      .toc__item:active {
+        background: #eeeeee;
+      }
+
+      a {
+        transition: all 100ms ease;
+        font-weight: 400;
+      }
+
+      a,
+      a:visited {
+        text-decoration: none;
+        color: #006b9c;
+      }
+
+      a:hover,
+      a:active {
+        color: #004464;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Initial Report: {{ title }}</h1>
+      <ul class="toc">
+        {% for report in reports %}
+        <a href="#{{ report.slug }}">
+          <li class="toc__item">
+            {{ report.title }}
+            {% for item in report.items %}
+            {{ item.indicator }}
+            {% endfor %}
+          </li>
+        </a>
+        {% endfor %}
+      </ul>
       {% for report in reports %}
-      <h2>{{ report.title }}</h2>
+      <h2 id="{{ report.slug }}">{{ report.title }}</h2>
       {% for item in report.items %}
-      <h3>{{ item.name }}: {{ item.number }}</h3>
+      <h3{% if item.description %} title="{{item.description}}"{% endif %}>
+        {{ item.name }}: {{ item.number }} {{ item.indicator }}
+      </h3>
       {{ item.image }}
       {% endfor %} {% endfor %}
     </main>

@@ -27,6 +27,7 @@ setup(
     url="https://github.com/mggg/initial-report",
     packages=find_packages(exclude=("tests",)),
     install_requires=requirements,
+    entry_points={"console_scripts": ["initial_report = initial_report.__main__:main"]},
     classifiers=[
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

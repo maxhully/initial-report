@@ -22,6 +22,7 @@ setup(
     description="High-level dashboard views of graphs and districting plans",
     author="Max Hully",
     author_email="max@mggg.org",
+    include_package_data=True,
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mggg/initial-report",
